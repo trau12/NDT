@@ -1,10 +1,11 @@
 package com.ndt.identity_service.service;
 
+import com.ndt.identity_service.constant.PredefinedRole;
 import com.ndt.identity_service.dto.request.UserCreationRequest;
 import com.ndt.identity_service.dto.request.UserUpdateRequest;
 import com.ndt.identity_service.dto.response.UserResponse;
+import com.ndt.identity_service.entity.Role;
 import com.ndt.identity_service.entity.User;
-import com.ndt.identity_service.enums.Role;
 import com.ndt.identity_service.exception.AppException;
 import com.ndt.identity_service.exception.ErrorCode;
 import com.ndt.identity_service.mapper.UserMapper;
@@ -30,28 +31,22 @@ import java.util.List;
 @Slf4j
 public class UserService {
     UserRepository userRepository;
-
     UserMapper userMapper;
-
     RoleRepository roleRepository;
-
     PasswordEncoder passwordEncoder;
-    public UserResponse createUser(UserCreationRequest request){
-        log.info("Service: create User");
-        if(userRepository.existsByUsername(request.getUsername()))
-            throw new AppException(ErrorCode.USER_EXISTED);
-        User user = userMapper.toUser(request);
 
+    public UserResponse createUser(UserCreationRequest request) {
+        User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        HashSet<String> roles = new HashSet<>();
-        roles.add(Role.USER.name());
+        HashSet<Role> roles = new HashSet<>();
+        roleRepository.findById(PredefinedRole.USER_ROLE).ifPresent(roles::add);
 
-//        user.setRoles(roles);
+        user.setRoles(roles);
 
         try {
             user = userRepository.save(user);
-        } catch (DataIntegrityViolationException exception){
+        } catch (DataIntegrityViolationException exception) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
