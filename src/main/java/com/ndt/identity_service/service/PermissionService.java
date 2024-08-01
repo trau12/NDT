@@ -1,7 +1,7 @@
 package com.ndt.identity_service.service;
 
 import com.ndt.identity_service.dto.request.PermissionRequest;
-import com.ndt.identity_service.ropository.PermissionRepository;
+import com.ndt.identity_service.repository.PermissionRepository;
 import com.ndt.identity_service.dto.response.PermissionResponse;
 import com.ndt.identity_service.entity.Permission;
 import com.ndt.identity_service.mapper.PermissionMapper;

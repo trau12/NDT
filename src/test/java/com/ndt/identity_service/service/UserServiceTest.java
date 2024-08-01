@@ -10,7 +10,7 @@ import com.ndt.identity_service.dto.request.UserCreationRequest;
 import com.ndt.identity_service.dto.response.UserResponse;
 import com.ndt.identity_service.entity.User;
 import com.ndt.identity_service.exception.AppException;
-import com.ndt.identity_service.ropository.UserRepository;
+import com.ndt.identity_service.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.Optional;
 import org.assertj.core.api.Assertions;

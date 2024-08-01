@@ -4,25 +4,35 @@ import com.ndt.identity_service.dto.request.ApiResponse;
 import com.ndt.identity_service.dto.request.UserCreationRequest;
 import com.ndt.identity_service.dto.request.UserUpdateRequest;
 import com.ndt.identity_service.dto.response.UserResponse;
-import com.ndt.identity_service.entity.User;
+import com.ndt.identity_service.entity.UserDocument;
 import com.ndt.identity_service.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/users")
-@RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class UserController {
-    UserService userService;
+    @Autowired
+    CacheManager cacheManager;
+
+    final UserService userService;
+
+
+    public UserController(CacheManager cacheManager, UserService userService) {
+        this.cacheManager = cacheManager;
+        this.userService = userService;
+    }
 
     @PostMapping
     ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request){
@@ -65,4 +75,75 @@ public class UserController {
         userService.deleteUser(userId);
         return ApiResponse.<String>builder().result("User has been deleted").build();
     }
+
+    @PostMapping("/sync")
+    public String syncUsers(){
+        return userService.syncUser(userService.getAllUsersUnpageable());
+    }
+
+    /**
+     * Normal search
+     * @param keyword
+     * @return
+     */
+    @GetMapping("/search/lastname/{keyword}")
+    public ApiResponse<List<UserResponse>> finByAddress(@PathVariable String keyword) {
+        return (ApiResponse<List<UserResponse>>) userService.findByLastName(keyword);
+    }
+
+    /**
+     * Get all from Elasticsearch
+     * @return
+     */
+    @GetMapping("/getAllUsers")
+    public Iterable<UserDocument> getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+    /**
+     * Fuzzy search
+     * @param lastName
+     * @return
+     */
+    @GetMapping("/fuzzysearch/lastname/{lastName}")
+    public List<UserDocument> findByAddressFuzzy(@PathVariable String lastName) {
+        return userService.findByLastNameFuzzy(lastName);
+    }
+    /**
+     * Get Employee by firstName
+     * @param firstName
+     * @return
+     */
+    @GetMapping("/firstName/{firstName}/nocache")
+    public ApiResponse<List<UserResponse>> getUserByFirstNameWithoutCache(@PathVariable String firstName) {
+        List<UserResponse> users = userService.getUserByFirstName(firstName);
+        return ApiResponse.<List<UserResponse>>builder()
+                .result(users)
+                .build();
+    }
+    @Cacheable(value = "user", key = "#firstName")
+    @GetMapping("/firstName/{firstName}")
+    public ApiResponse<List<UserResponse>> getUserByFirstName(@PathVariable String firstName) { //check user/ userResponse
+        if (!cacheHit(firstName)) {
+            log.warn("Cache miss for Employee with firstName: " + firstName);
+        }
+        List<UserResponse> users = userService.getUserByFirstName(firstName);
+        return ApiResponse.<List<UserResponse>>builder()
+                .result(users)
+                .build();
+    }
+    /**
+     * Check cache
+     * @param name
+     * @return
+     */
+    private boolean cacheHit(String name) {
+        Cache cache = cacheManager.getCache("user");
+        if (cache != null) {
+            Cache.ValueWrapper valueWrapper = cache.get(name);
+            return valueWrapper != null;
+        }
+        return false;
+    }
+
 }

@@ -10,8 +10,8 @@ import com.ndt.identity_service.entity.InvalidatedToken;
 import com.ndt.identity_service.entity.User;
 import com.ndt.identity_service.exception.AppException;
 import com.ndt.identity_service.exception.ErrorCode;
-import com.ndt.identity_service.ropository.InvalidatedTokenRepository;
-import com.ndt.identity_service.ropository.UserRepository;
+import com.ndt.identity_service.repository.InvalidatedTokenRepository;
+import com.ndt.identity_service.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -32,7 +32,6 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.UUID;
 

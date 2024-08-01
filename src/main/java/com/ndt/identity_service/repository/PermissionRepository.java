@@ -1,4 +1,4 @@
-package com.ndt.identity_service.ropository;
+package com.ndt.identity_service.repository;
 
 import com.ndt.identity_service.entity.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
